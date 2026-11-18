@@ -1,3 +1,0 @@
-C:/Users/dijag/MeowScript/build/CMakeFiles/meowscript.dir
-C:/Users/dijag/MeowScript/build/CMakeFiles/edit_cache.dir
-C:/Users/dijag/MeowScript/build/CMakeFiles/rebuild_cache.dir
