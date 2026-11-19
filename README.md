@@ -1,14 +1,21 @@
 # MeowScript
 
-MeowScript is a small, compiled programming language with the `.meow` file extension. Its compiler is written in **C++20**.
+MeowScript is a small, statically typed, compiled programming language with the `.meow` file extension. Its compiler is written in **C++20** and currently uses C++ code generation to produce native executables.
 
 ## Features
 
 - Statically typed language
-- AOT compilation (planned)
+- Lexer and tokenizer
+- Recursive parser
+- AST based architecture using std::variant
 - Explicit variable declarations
+- Variable assignments
 - Arithmetic expressions
 - Unary negation
+- Boolean and string literals
+- print statements
+- C++ source code generation
+- Native executable generation through GCC
 
 ## Example
 
@@ -19,6 +26,10 @@ name: string = "Meow"
 alive: bool = true
 
 totalCatCount: i32 = (1 + 2) * 4
+
+print(catnip)
+print(name)
+print(totalCatCount)
 ```
 
 ## Types
@@ -31,7 +42,7 @@ totalCatCount: i32 = (1 + 2) * 4
 | `bool` | Boolean (`true` / `false`) |
 | `string` | Strings |
 
-Since MeowScript is statically typed, variable types are determined at compile time and will be checked before code generation.
+MeowScript is statically typed. Variable types are determined at compile time and are intended to be validated before code generation.
 
 ## Operators
 
@@ -41,11 +52,13 @@ Since MeowScript is statically typed, variable types are determined at compile t
 | `+`, `-` | Addition and subtraction | Lower |
 | `-` (prefix) | Unary negation | Highest |
 
-### Requirements
+## Requirements
 
-- C++20 compatible compiler
+- C++ 20 compatible compiler
 - GCC 11 or newer (or another C++20 compatible compiler)
 - CMake 3.20 or newer
+
+## Building
 
 ### Windows (MinGW)
 
@@ -60,32 +73,37 @@ cmake --build build
 cmake -S . -B build
 cmake --build build
 ```
-**Windows:**
+
+## Usage
+
+MeowScript compiles `.meow` source files into native executables using GCC.
+
+### Windows
+
 ```powershell
-build\meowscript.exe input.meow
+build\meowscript.exe input.meow -o output.exe
 ```
 
-**Linux / macOS:**
+### Linux / macOS
+
 ```bash
-./build/meowscript input.meow
+./build/meowscript input.meow -o output
 ```
+
+The compiler generates an intermediate C++ source file (`output.cpp`) and then invokes GCC to compile it into the requested executable.
 
 The input file must use the `.meow` extension.
 
-## In the making
+## Planned Features
 
-- Complete lexer implementation
-- Expression parsing
-- Variable declarations
-- Assignments
-- print statements
 - Semantic analysis
-- Type checking
-- Code generation
-- Native executable generation
+- Complete type checking
+- Improved error reporting
 - Control flow (if, loops)
 - Functions
-- Garbage collector(optionally toggled using flags)
+- Concurrency
+- Garbage collection (optionally configurable through compiler flags)
+- Direct native code generation (potential future alternative to C++ code generation)
 
 ## License
 
