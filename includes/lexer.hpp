@@ -14,11 +14,22 @@ enum class TokenType {
   Star,
   Slash,
 
+  EqualEqual,
+  NotEqual,
+
+  bigger,
+  smaller,
+  biggerAnd,
+  smallerAnd,
+
   Colon,
   Semicolon,
+  Bang,
 
   LeftParen,
   RightParen,
+  LeftBrack,
+  RightBrack,
 
   Equals,
 

@@ -8,6 +8,7 @@
 #include <system_error>
 #include <type_traits>
 #include <variant>
+#include <vector>
 
 #include "../includes/parser.hpp"
 #include "../includes/types.hpp"
@@ -145,7 +146,8 @@ std::optional<ASTNode> Parser::parsePrimary() {
     advance();
 
     auto inner = parseExpression();
-    if(!inner) return std::nullopt;
+    if (!inner)
+      return std::nullopt;
 
     expect(TokenType::RightParen, "Expected ')'!");
     return inner;
@@ -155,7 +157,7 @@ std::optional<ASTNode> Parser::parsePrimary() {
   }
 }
 
-bool Parser::parseDeclaration() {
+std::optional<ASTNode> Parser::parseDeclaration() {
   std::string name(
       expect(TokenType::Identifier, "Expected variable name").value().text);
   expect(TokenType::Colon, "Expected ':' after variable name");
@@ -172,9 +174,7 @@ bool Parser::parseDeclaration() {
       DeclarationNode{std::move(name), std::move(type),
                       std::make_unique<ASTNode>(std::move(*value))}};
 
-  ast.push_back(std::move(declaration));
-
-  return true;
+  return declaration;
 }
 
 TypeRef Parser::parseType() {
@@ -202,39 +202,74 @@ std::variant<std::int64_t, double> Parser::parseNumber(const Token &token) {
   return real;
 }
 
-bool Parser::parseStatement() {
+std::optional<ASTNode> Parser::parseStatement() {
   auto token = peek();
   if (!token)
-    return false;
+    return std::nullopt;
 
   if (token->type == TokenType::KwPrint)
     return parsePrint();
 
+  if (token->type == TokenType::LeftBrack)
+    return parseBlock();
+
   if (token->type == TokenType::Identifier) {
     auto next = peek(1);
+
     if (next && next->type == TokenType::Colon)
       return parseDeclaration();
+
     if (next && next->type == TokenType::Equals)
       return parseAssignment();
   }
 
-  return false;
+  return std::nullopt;
 }
 
-bool Parser::parsePrint() {
+std::optional<ASTNode> Parser::parsePrint() {
   advance();
+
+  if (!match(TokenType::LeftParen))
+    throw ParseError("Expected '(' after print!",
+                     peek().value_or(previous().value()));
 
   auto value = parseExpression();
   if (!value)
     throw ParseError("Expected expression",
-                     peek().value_or(previous().value())); 
+                     peek().value_or(previous().value()));
 
-  ast.push_back(ASTNode{
-      PrintNode{std::make_unique<ASTNode>(std::move(*value))}});
-  return true;
+  if (!match(TokenType::RightParen))
+    throw ParseError("Expected ')' after print!",
+                     peek().value_or(previous().value()));
+
+  ASTNode print{PrintNode{std::make_unique<ASTNode>(std::move(*value))}};
+
+  return print;
 }
 
-bool Parser::parseAssignment() {
+std::optional<ASTNode> Parser::parseBlock() {
+  expect(TokenType::LeftBrack, "Expected '{'");
+
+  std::vector<NodePtr> statements;
+
+  while (!check(TokenType::RightBrack)) {
+    if (atEnd())
+      throw std::runtime_error("Expected '}'");
+
+    auto statement = parseStatement();
+
+    if (!statement)
+      throw ParseError("Unexpected token in block!", peek().value());
+
+    statements.push_back(std::make_unique<ASTNode>(std::move(*statement)));
+  }
+
+  advance(); // consume }
+
+  return ASTNode{BlockNode{std::move(statements)}};
+}
+
+std::optional<ASTNode> Parser::parseAssignment() {
   std::string name(
       expect(TokenType::Identifier, "Expected variable name").value().text);
   expect(TokenType::Equals, "Expected '=' in assignment");
@@ -245,17 +280,20 @@ bool Parser::parseAssignment() {
                      peek().value_or(previous().value()));
   match(TokenType::Semicolon);
 
-  ast.push_back(ASTNode{AssignmentNode{
-      std::move(name), std::make_unique<ASTNode>(std::move(*value))}});
-  return true;
+  ASTNode declaration{AssignmentNode{
+      std::move(name), std::make_unique<ASTNode>(std::move(*value))}};
+
+  return declaration;
 }
 
 bool Parser::parse() {
   while (!atEnd()) {
-    if (parseStatement())
-      continue;
+    auto statement = parseStatement();
 
-    throw ParseError("Unexpected token!", peek().value());
+    if (!statement)
+      throw ParseError("Unexpected token!", peek().value());
+
+    ast.push_back(std::move(*statement));
   }
 
   return true;

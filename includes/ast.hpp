@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <variant>
+#include <vector>
 
 #include "lexer.hpp"
 #include "types.hpp"
@@ -53,9 +54,14 @@ struct PrintNode {
   NodePtr content;
 };
 
+struct BlockNode {
+  std::vector<NodePtr> statements;
+};
+
 struct ASTNode {
   std::variant<NumberNode, BoolNode, StringNode, IdentifierNode, UnaryExprNode,
-               BinaryExprNode, DeclarationNode, AssignmentNode, PrintNode>
+               BinaryExprNode, DeclarationNode, AssignmentNode, PrintNode,
+               BlockNode>
       value;
 };
 

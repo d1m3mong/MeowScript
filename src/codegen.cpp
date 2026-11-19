@@ -100,6 +100,13 @@ std::string CodeGen::statement(const ASTNode *node) {
         } else if constexpr (std::is_same_v<T, PrintNode>) {
           return "std::cout << meow_show(" + expression(v.content.get()) +
                  ") << '\\n';";
+        } else if constexpr (std::is_same_v<T, BlockNode>) {
+          std::string result = "{\n";
+
+          for (const auto &statement : v.statements)
+            result += this->statement(statement.get()) + "\n";
+
+          return result + "}";
         } else {
           throw std::runtime_error("Invalid Statement!");
         }

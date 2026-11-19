@@ -1,9 +1,11 @@
 #pragma once
 
+#include <cstdint>
 #include <optional>
 #include <stdexcept>
 #include <string_view>
 #include <unordered_map>
+#include <variant>
 enum class PrimitiveKind {
   I8,
   I16,
@@ -21,8 +23,18 @@ enum class PrimitiveKind {
 };
 
 struct TypeRef {
-  std::string_view text;
+  std::string text;
   std::optional<PrimitiveKind> primitive;
+
+  bool operator==(const TypeRef &) const = default;
+};
+
+using Value =
+    std::variant<std::int64_t, std::uint64_t, double, bool, std::string>;
+
+struct Variable {
+  Value value;
+  PrimitiveKind type;
 };
 
 inline std::optional<PrimitiveKind> lookupPrimitive(std::string_view name) {

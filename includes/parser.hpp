@@ -39,12 +39,14 @@ class Parser {
   std::optional<ASTNode> parsePrimary();
   std::variant<std::int64_t, double> parseNumber(const Token &token);
 
-  bool parseDeclaration();
- bool parseAssignment();
+  std::optional<ASTNode> parseDeclaration();
+  std::optional<ASTNode> parseAssignment();
+  std::optional<ASTNode> parseBlock();
+
   TypeRef parseType();
 
-  bool parseStatement();
-  bool parsePrint();
+  std::optional<ASTNode> parseStatement();
+  std::optional<ASTNode> parsePrint();
 
   double transformCharToDigit(const Token &token);
   bool tranformCharToBoolean(const Token &token);

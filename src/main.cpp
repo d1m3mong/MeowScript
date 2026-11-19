@@ -1,15 +1,16 @@
 #include <cstdlib>
 #include <exception>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <vector>
-#include <filesystem>
 
 #include "../includes/codegen.hpp"
 #include "../includes/lexer.hpp"
 #include "../includes/parser.hpp"
+#include "../includes/semanticanalyzer.hpp"
 
 #include "filesystem.hpp"
 
@@ -39,6 +40,10 @@ int main(int argc, char **argv) {
       return -1;
     }
 
+    SemanticAnalyzer semantic;
+
+    semantic.analyze(parser.getAST());
+
     std::filesystem::path outputPath(argv[3]);
 
     std::filesystem::path cppFile = outputPath;
@@ -60,19 +65,18 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    std::string command =
-      "g++ -std=c++20 \"" + cppFile.string() +
-      "\" -o \"" + outputPath.string() + "\"";
+    std::string command = "g++ -std=c++20 \"" + cppFile.string() + "\" -o \"" +
+                          outputPath.string() + "\"";
 
     int result = std::system(command.c_str());
 
     if (result != 0) {
-        std::cerr << "Compilation failed!\n";
-        return 1;
-    }  
+      std::cerr << "Compilation failed!\n";
+      return 1;
+    }
   } catch (const std::exception &except) {
-      std::cerr << "Trapped: " << except.what() << '\n';
-      return -1;
+    std::cerr << "Trapped: " << except.what() << '\n';
+    return -1;
   }
 
   return 0;

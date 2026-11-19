@@ -1,7 +1,8 @@
-catnip: u64 = 100
-price: f32 = 9.99
-name: string = "Meow"
-total: i32 = (1 + 2) * 4
-print total
-print name
-print price
+x: i64 = 5
+
+{
+    x: i64 = 10
+    print(x)
+}
+
+print(x)
