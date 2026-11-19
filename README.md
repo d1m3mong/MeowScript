@@ -1,6 +1,6 @@
 # MeowScript
 
-MeowScript is a small, statically typed, compiled programming language with the `.meow` file extension. Its compiler is written in **C++20** and currently uses C++ code generation to produce native executables.
+MeowScript is a small, statically typed, compiled programming language with the `.meow` file extension. Its compiler is written in **C++ 20** and currently uses C++ code generation to produce native executables.
 
 ## Features
 
@@ -8,12 +8,18 @@ MeowScript is a small, statically typed, compiled programming language with the 
 - Lexer and tokenizer
 - Recursive parser
 - AST based architecture using std::variant
+- Semantic analysis
+- Compiletime type checking
+- Primitive data types
 - Explicit variable declarations
 - Variable assignments
 - Arithmetic expressions
 - Unary negation
 - Boolean and string literals
 - print statements
+- Block statements and nested scopes
+- Variable shadowing
+- Automatic scope management
 - C++ source code generation
 - Native executable generation through GCC
 
@@ -32,6 +38,30 @@ print(name)
 print(totalCatCount)
 ```
 
+### Blocks and Scopes
+
+MeowScript supports block statements using curly braces. Each block creates its own scope.
+
+```meow
+x: i64 = 5
+
+{
+    x: i64 = 10
+    print(x)
+}
+
+print(x)
+```
+
+Output:
+
+```text
+10
+5
+```
+
+Variables declared inside a block are only accessible within that block. Nested scopes also support variable shadowing.
+
 ## Types
 
 | Type | Description |
@@ -42,7 +72,7 @@ print(totalCatCount)
 | `bool` | Boolean (`true` / `false`) |
 | `string` | Strings |
 
-MeowScript is statically typed. Variable types are determined at compile time and are intended to be validated before code generation.
+MeowScript is statically typed. Variable declarations and expressions are analyzed at compile time. Type mismatches and invalid operations are rejected during semantic analysis.
 
 ## Operators
 
@@ -90,20 +120,20 @@ build\meowscript.exe input.meow -o output.exe
 ./build/meowscript input.meow -o output
 ```
 
-The compiler generates an intermediate C++ source file (`output.cpp`) and then invokes GCC to compile it into the requested executable.
+The compiler generates an intermediate C++ source file (output.cpp) and then invokes GCC to compile it into the requested executable.
 
 The input file must use the `.meow` extension.
 
 ## Planned Features
 
-- Semantic analysis
-- Complete type checking
-- Improved error reporting
 - Control flow (if, loops)
 - Functions
-- Concurrency
-- Garbage collection (optionally configurable through compiler flags)
-- Direct native code generation (potential future alternative to C++ code generation)
+- User defined data types
+- Improved error reporting
+- Concurrency (async and multithreading)
+- Garbage collection
+- ECS oriented architecture and language support
+- Direct native code generation as a potential alternative to C++ code generation
 
 ## License
 
