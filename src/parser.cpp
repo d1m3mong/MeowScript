@@ -6,11 +6,11 @@
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <tuple>
 #include <type_traits>
 #include <variant>
 
 #include "../includes/parser.hpp"
+#include "../includes/types.hpp"
 
 int Parser::getBindingPower(TokenType type) const {
   switch (type) {
@@ -141,6 +141,15 @@ std::optional<ASTNode> Parser::parsePrimary() {
     return ASTNode{UnaryExprNode{TokenType::Minus,
                                  std::make_unique<ASTNode>(std::move(*inner))}};
   }
+  case TokenType::LeftParen: {
+    advance();
+
+    auto inner = parseExpression();
+    if(!inner) return std::nullopt;
+
+    expect(TokenType::RightParen, "Expected ')'!");
+    return inner;
+  }
   default:
     throw ParseError("Expected expression", *token);
   }
@@ -193,9 +202,57 @@ std::variant<std::int64_t, double> Parser::parseNumber(const Token &token) {
   return real;
 }
 
+bool Parser::parseStatement() {
+  auto token = peek();
+  if (!token)
+    return false;
+
+  if (token->type == TokenType::KwPrint)
+    return parsePrint();
+
+  if (token->type == TokenType::Identifier) {
+    auto next = peek(1);
+    if (next && next->type == TokenType::Colon)
+      return parseDeclaration();
+    if (next && next->type == TokenType::Equals)
+      return parseAssignment();
+  }
+
+  return false;
+}
+
+bool Parser::parsePrint() {
+  advance();
+
+  auto value = parseExpression();
+  if (!value)
+    throw ParseError("Expected expression",
+                     peek().value_or(previous().value())); 
+
+  ast.push_back(ASTNode{
+      PrintNode{std::make_unique<ASTNode>(std::move(*value))}});
+  return true;
+}
+
+bool Parser::parseAssignment() {
+  std::string name(
+      expect(TokenType::Identifier, "Expected variable name").value().text);
+  expect(TokenType::Equals, "Expected '=' in assignment");
+
+  auto value = parseExpression();
+  if (!value)
+    throw ParseError("Expected expression",
+                     peek().value_or(previous().value()));
+  match(TokenType::Semicolon);
+
+  ast.push_back(ASTNode{AssignmentNode{
+      std::move(name), std::make_unique<ASTNode>(std::move(*value))}});
+  return true;
+}
+
 bool Parser::parse() {
   while (!atEnd()) {
-    if (parseDeclaration())
+    if (parseStatement())
       continue;
 
     throw ParseError("Unexpected token!", peek().value());
@@ -221,6 +278,61 @@ bool Parser::tranformCharToBoolean(const Token &token) {
     return true;
   return false;
 }
+
+void Parser::showAST(const ASTNode *node) const {
+  std::visit(
+      [this](const auto &value) {
+        using T = std::decay_t<decltype(value)>;
+
+        if constexpr (std::is_same_v<T, NumberNode>) {
+          std::cout << "NumberNode\n";
+        }
+        if constexpr (std::is_same_v<T, StringNode>) {
+          std::cout << "StringNode\n";
+        }
+
+        if constexpr (std::is_same_v<T, BoolNode>) {
+          std::cout << "BooleanNode\n";
+        }
+
+        if constexpr (std::is_same_v<T, UnaryExprNode>) {
+          std::cout << tokenTypeToString(value.op);
+          showAST(value.operand.get());
+          std::cout << '\n';
+        }
+
+        if constexpr (std::is_same_v<T, BinaryExprNode>) {
+          std::cout << "(";
+          showAST(value.left.get());
+          std::cout << tokenTypeToString(value.op) << " ";
+          showAST(value.right.get());
+          std::cout << ")\n";
+        }
+
+        if constexpr (std::is_same_v<T, DeclarationNode>) {
+          std::cout << "DeclarationNode: " << value.name << " type: ";
+
+          if (value.type.primitive.has_value())
+            std::cout << getPrimitiveSurname(*value.type.primitive);
+          else
+            std::cout << value.type.text;
+
+          std::cout << '\n';
+        }
+
+        if constexpr (std::is_same_v<T, AssignmentNode>) {
+          std::cout << "AssignmentNode: " << value.name << "\n";
+        }
+        if constexpr (std::is_same_v<T, PrintNode>) {
+          std::cout << "PrintNode: ";
+          showAST(value.content.get());
+          std::cout << '\n';
+        }
+      },
+      node->value);
+}
+
+const std::vector<ASTNode> &Parser::getAST() const { return ast; }
 
 ParseError::ParseError(const std::string &message, const Token &token)
     : std::runtime_error("Line: " + std::to_string(token.line) + ", column " +

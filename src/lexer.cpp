@@ -63,15 +63,36 @@ Token Lexer::nextToken() {
 
   char c = source.at(position);
 
-  if (isDigit(c)) {
-    while (!atEnd() && isDigit(peek())) {
+    if (c == '"') {
+    advance();
+    size_t contentStart = position;
+
+    while (!atEnd() && peek() != '"' && peek() != '\n')
       advance();
+
+    if (atEnd() || peek() != '"')
+      return Token{TokenType::Invalid, source.substr(start, position - start),
+                   startLine, startColumn};
+
+    std::string_view text = source.substr(contentStart, position - contentStart);
+    advance();
+
+    return Token{TokenType::String, text, startLine, startColumn};
+  }
+
+    if (isDigit(c)) {
+    while (!atEnd() && isDigit(peek()))
+      advance();
+
+    if (peek() == '.' && isDigit(peek(1))) {
+      advance();
+      while (!atEnd() && isDigit(peek()))
+        advance();
     }
 
     return Token{TokenType::Number, source.substr(start, position - start),
                  startLine, startColumn};
-  } else if (isAlphaNumeric(c)) {
-    while (!atEnd() && isAlphaNumeric(peek())) {
+  } else if (isAlphaNumeric(c)) {    while (!atEnd() && isAlphaNumeric(peek())) {
       advance();
     }
 
@@ -150,6 +171,24 @@ Token Lexer::nextToken() {
         startLine,
         startColumn,
     };
+  case '(':
+    advance();
+
+    return Token{
+      TokenType::LeftParen,
+      "(",
+      startLine,
+      startColumn,
+    };
+  case ')':
+    advance();
+    
+    return Token{
+      TokenType::RightParen,
+      ")",
+      startLine,
+      startColumn,
+    };
 
   default:
     advance();
@@ -225,6 +264,10 @@ std::string_view tokenTypeToString(TokenType type) {
 
   case TokenType::Equals:
     return "Equals";
+  case TokenType::LeftParen:
+    return "LeftParen";
+  case TokenType::RightParen:
+    return "RightParen";
 
   case TokenType::Semicolon:
     return "Semicolon";

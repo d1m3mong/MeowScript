@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <stdexcept>
 #include <string_view>
 #include <unordered_map>
 enum class PrimitiveKind {
@@ -38,4 +39,21 @@ inline std::optional<PrimitiveKind> lookupPrimitive(std::string_view name) {
   if (it == table.end())
     return std::nullopt;
   return it->second;
+}
+
+inline std::string_view getPrimitiveSurname(PrimitiveKind kind) {
+  static const std::unordered_map<std::string_view, PrimitiveKind> table = {
+      {"i8", PrimitiveKind::I8},     {"i16", PrimitiveKind::I16},
+      {"i32", PrimitiveKind::I32},   {"i64", PrimitiveKind::I64},
+      {"u8", PrimitiveKind::U8},     {"u16", PrimitiveKind::U16},
+      {"u32", PrimitiveKind::U32},   {"u64", PrimitiveKind::U64},
+      {"f32", PrimitiveKind::F32},   {"f64", PrimitiveKind::F64},
+      {"bool", PrimitiveKind::Bool}, {"string", PrimitiveKind::String},
+  };
+
+  for (const auto &[name, value] : table) {
+    if (value == kind)
+      return name;
+  }
+  return "ErrorType";
 }

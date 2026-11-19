@@ -40,9 +40,11 @@ class Parser {
   std::variant<std::int64_t, double> parseNumber(const Token &token);
 
   bool parseDeclaration();
-  std::optional<ASTNode> parsePrint();
-  bool parseAssignment();
+ bool parseAssignment();
   TypeRef parseType();
+
+  bool parseStatement();
+  bool parsePrint();
 
   double transformCharToDigit(const Token &token);
   bool tranformCharToBoolean(const Token &token);
@@ -50,4 +52,7 @@ class Parser {
 public:
   explicit Parser(std::vector<Token> &tokens) : tokens(std::move(tokens)) {}
   bool parse();
+
+  void showAST(const ASTNode *node) const;
+  const std::vector<ASTNode> &getAST() const;
 };

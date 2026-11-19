@@ -17,6 +17,9 @@ enum class TokenType {
   Colon,
   Semicolon,
 
+  LeftParen,
+  RightParen,
+
   Equals,
 
   KwPrint,
